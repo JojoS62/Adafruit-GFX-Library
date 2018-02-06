@@ -1,15 +1,29 @@
 #ifndef _ADAFRUIT_GFX_H
 #define _ADAFRUIT_GFX_H
 
+#ifdef __MBED__
+#include "mbed.h"
+#ifndef PROGMEM
+ #define PROGMEM
+#endif
+#ifndef boolean
+ #define boolean bool
+#endif
+#else
 #if ARDUINO >= 100
  #include "Arduino.h"
  #include "Print.h"
 #else
  #include "WProgram.h"
 #endif
+#endif
 #include "gfxfont.h"
 
+#ifdef __MBED__
+class Adafruit_GFX : public Stream {
+#else
 class Adafruit_GFX : public Print {
+#endif
 
  public:
 
@@ -102,9 +116,11 @@ class Adafruit_GFX : public Print {
     cp437(boolean x=true),
     setFont(const GFXfont *f = NULL),
     getTextBounds(char *string, int16_t x, int16_t y,
-      int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h),
-    getTextBounds(const __FlashStringHelper *s, int16_t x, int16_t y,
       int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h);
+#ifndef __MBED__
+  	  void getTextBounds(const __FlashStringHelper *s, int16_t x, int16_t y,
+      int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h);
+#endif
 
 #if ARDUINO >= 100
   virtual size_t write(uint8_t);
@@ -120,6 +136,10 @@ class Adafruit_GFX : public Print {
   // get current cursor position (get rotation safe maximum values, using: width() for x, height() for y)
   int16_t getCursorX(void) const;
   int16_t getCursorY(void) const;
+
+  #ifdef __MBED__
+	 void println(const char *string) { printf(string); };
+#endif
 
  protected:
   void
@@ -140,6 +160,13 @@ class Adafruit_GFX : public Print {
     _cp437; // If set, use correct CP437 charset (default is off)
   GFXfont
     *gfxFont;
+#ifdef __MBED__
+  // Stream implementation functions
+  // mbed inherits from Stream instead of Arduino Print class
+      virtual int _putc(int value);
+      virtual int _getc();
+#endif
+
 };
 
 class Adafruit_GFX_Button {

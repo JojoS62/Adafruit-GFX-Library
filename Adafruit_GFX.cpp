@@ -1019,6 +1019,7 @@ void Adafruit_GFX::getTextBounds(char *str, int16_t x, int16_t y,
     }
 }
 
+#ifndef __MBED__
 // Same as above, but for PROGMEM strings
 void Adafruit_GFX::getTextBounds(const __FlashStringHelper *str,
         int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h) {
@@ -1042,6 +1043,7 @@ void Adafruit_GFX::getTextBounds(const __FlashStringHelper *str,
         *h  = maxy - miny + 1;
     }
 }
+#endif
 
 // Return the size of the display (per current rotation)
 int16_t Adafruit_GFX::width(void) const {
@@ -1055,6 +1057,62 @@ int16_t Adafruit_GFX::height(void) const {
 void Adafruit_GFX::invertDisplay(boolean i) {
     // Do nothing, must be subclassed if supported by hardware
 }
+
+#ifdef __MBED__
+// implementation of mbed Stream class methods
+int Adafruit_GFX::_putc(int c) {
+  if(!gfxFont) { // 'Classic' built-in font
+
+    if(c == '\n') {
+      cursor_y += textsize*8;
+      cursor_x  = 0;
+    } else if(c == '\r') {
+      // skip em
+    } else {
+      if(wrap && ((cursor_x + textsize * 6) >= _width)) { // Heading off edge?
+        cursor_x  = 0;            // Reset x to zero
+        cursor_y += textsize * 8; // Advance y one line
+      }
+      drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize);
+      cursor_x += textsize * 6;
+    }
+
+  } else { // Custom font
+
+    if(c == '\n') {
+      cursor_x  = 0;
+      cursor_y += (int16_t)textsize *
+                  (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
+    } else if(c != '\r') {
+      uint8_t first = pgm_read_byte(&gfxFont->first);
+      if((c >= first) && (c <= (uint8_t)pgm_read_byte(&gfxFont->last))) {
+        uint8_t   c2    = c - pgm_read_byte(&gfxFont->first);
+        GFXglyph *glyph = &(((GFXglyph *)pgm_read_pointer(&gfxFont->glyph))[c2]);
+        uint8_t   w     = pgm_read_byte(&glyph->width),
+                  h     = pgm_read_byte(&glyph->height);
+        if((w > 0) && (h > 0)) { // Is there an associated bitmap?
+          int16_t xo = (int8_t)pgm_read_byte(&glyph->xOffset); // sic
+          if(wrap && ((cursor_x + textsize * (xo + w)) >= _width)) {
+            // Drawing character would go off right edge; wrap to new line
+            cursor_x  = 0;
+            cursor_y += (int16_t)textsize *
+                        (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
+          }
+          drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize);
+        }
+        cursor_x += pgm_read_byte(&glyph->xAdvance) * (int16_t)textsize;
+      }
+    }
+
+  }
+  return 1;
+}
+
+// get a single character (Stream implementation)
+int Adafruit_GFX::_getc() {
+    return -1;
+}
+#endif
 
 /***************************************************************************/
 // code for the GFX button UI element
@@ -1113,7 +1171,12 @@ void Adafruit_GFX_Button::drawButton(boolean inverted) {
     _y1 + (_h/2) - (4 * _textsize));
   _gfx->setTextColor(text);
   _gfx->setTextSize(_textsize);
+#ifdef __MBED__
+  for (char *p = &_label[0]; *p!=0; p++)
+	  _gfx->write(*p);
+#else
   _gfx->print(_label);
+#endif
 }
 
 boolean Adafruit_GFX_Button::contains(int16_t x, int16_t y) {
