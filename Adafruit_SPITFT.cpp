@@ -14,6 +14,7 @@
  ****************************************************/
 
 #ifndef __AVR_ATtiny85__ // NOT A CHANCE of this stuff working on ATtiny!
+#ifndef __MBED__		 // currently not supported in mbed
 
 #include "Adafruit_SPITFT.h"
 #ifndef ARDUINO_STM32_FEATHER
@@ -336,4 +337,5 @@ void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y,
     endWrite();
 }
 
+#endif // !__mbed
 #endif // !__AVR_ATtiny85__
