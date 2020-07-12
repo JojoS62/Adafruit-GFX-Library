@@ -3,12 +3,16 @@
 
 #ifdef __MBED__
 #include "mbed.h"
+#include "Stream.h"
 #ifndef PROGMEM
  #define PROGMEM
 #endif
 #ifndef boolean
  #define boolean bool
 #endif
+
+#define delay   ThisThread::sleep_for
+
 #else
 #if ARDUINO >= 100
  #include "Arduino.h"
@@ -139,7 +143,7 @@ class Adafruit_GFX : public Print {
 
   #ifdef __MBED__
 	 void println(const char *string) { printf(string); };
-#endif
+  #endif
 
  protected:
   void

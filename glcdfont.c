@@ -13,6 +13,8 @@
  #define PROGMEM
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-const-variable"
 // Standard ASCII 5x7 font
 
 static const unsigned char font[] PROGMEM = {
@@ -273,4 +275,7 @@ static const unsigned char font[] PROGMEM = {
 	0x00, 0x3C, 0x3C, 0x3C, 0x3C,
 	0x00, 0x00, 0x00, 0x00, 0x00  // #255 NBSP
 };
+
+#pragma GCC diagnostic pop
+
 #endif // FONT5X7_H
